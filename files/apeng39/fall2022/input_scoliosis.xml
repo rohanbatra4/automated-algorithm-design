@@ -1,0 +1,206 @@
+<?xml version="1.0"?>
+
+<input>
+    <pythonConfig>
+        <localPythonCommand>python</localPythonCommand> <!--e.g. python3 -->
+        <gridPythonPath>/users/USER/anaconda3/envs/ENVIRO_NAME/bin/python</gridPythonPath>
+        <slurmPythonPathMaster>/home/USER/.conda/envs/ENVIRO_NAME/bin/python</slurmPythonPathMaster>
+        <slurmPythonPathWorker>/home/USER/.conda/envs/ENVIRO_NAME/bin/python</slurmPythonPathWorker>
+    </pythonConfig>
+    <!-- TODO: configure the following to your personal server:port, db_username, db_password, db_name -->
+    <dbConfig>
+        <server></server>
+        <username></username>
+        <password></password>
+        <database></database>
+        <reuse>1</reuse>
+    </dbConfig>
+    <cacheConfig>
+        <useCache>false</useCache>
+        <masterWaitTime>60</masterWaitTime>
+        <central>true</central>
+        <compression>false</compression>
+        <cacheLimit>10000000</cacheLimit>
+        <timeThreshold>0</timeThreshold>
+        <timeout>3000</timeout>
+    </cacheConfig>
+    <datasets>
+        <dataset>
+            <name>FullDataSet</name>
+            <type>imagedata</type>
+            <multilabel>0</multilabel>
+            <reduceInstances>1.0</reduceInstances>
+            <pickle>true</pickle>
+            <MonteCarlo>
+                <trial>
+                    <trainFilename>datasets/unit_test_data/aasce_data/aasce_train.npz</trainFilename>
+                    <testFilename>datasets/unit_test_data/aasce_data/aasce_val.npz</testFilename>
+                </trial>
+                <!-- <trial>
+                    <trainFilename>datasets/unit_test_data/shriners_data/scoliosis_train.npz</trainFilename>
+                    <testFilename>datasets/unit_test_data/shriners_data/scoliosis_val.npz</testFilename>
+                </trial> -->
+            </MonteCarlo>
+        </dataset>
+    </datasets>
+    <objectives>
+        <objective>
+            <name>SMAPE</name>
+            <weight>-1.0</weight>
+            <achievable>100.0</achievable>
+            <goal>0</goal>
+            <evaluationFunction>SMAPE_single_angle</evaluationFunction>
+            <lower>0</lower>
+            <upper>100</upper>
+        </objective>
+        <objective>
+            <name>Num Elements</name>
+            <weight>-1.0</weight>
+            <achievable>100.0</achievable>
+            <goal>0</goal>
+            <evaluationFunction>num_elements_eval_function</evaluationFunction>
+            <lower>10</lower>
+            <upper>100</upper>
+        </objective>
+        <objective>
+            <name>Num Parameters</name>
+            <weight>-1.0</weight>
+            <achievable>100.0</achievable>
+            <goal>0</goal>
+            <evaluationFunction>num_params</evaluationFunction>
+            <lower>0</lower>
+            <upper>1000000000</upper>
+        </objective>
+    </objectives>
+
+    <evaluation>
+        <module>eval_methods</module>
+        <memoryLimit>160000</memoryLimit> <!-- In MB -->
+    </evaluation>
+    <localRunParameters>
+        <workersPerHost>1</workersPerHost>
+    </localRunParameters>
+    <paceEngineParameters>
+        <queue>pace-ice-gpu</queue> <!--pace-ice is default, pace-ice-gpu to use V100s. NOTE: This will force your workersPerHost value to 1 to prevent them from competing for same hardware-->
+        <walltime>7:30:00</walltime> <!-- 8 hours is the limit as of Fall 2021 -->
+        <modules>jdk/1.8.0_202 openmpi/3.1.6 gcc anaconda3/2021.05 cuda/11.2 tensorflow-gpu/2.6.0</modules> <!--space delimited list of module names -->
+        <numHosts>3</numHosts>
+        <workersPerHost>1</workersPerHost>
+        <ramPerHostCPU>32GB</ramPerHostCPU>
+        <ramPerMasterCPU>16GB</ramPerMasterCPU>
+        <!-- TODO: set conda environment to shared conda env -->
+        <anacondaEnvironment>/storage/home/hpaceice1/shared-classes/materials/vip/AAD/ip_group/img_proc_tf26</anacondaEnvironment>
+    </paceEngineParameters>
+    <slurmEngineParameters>
+        <numHosts>2</numHosts>
+        <workersPerHost>2</workersPerHost>
+	      <jobName>emade.xray</jobName>
+	      <runtime>05:00</runtime> <!--Optional runtime in D-HH:MM -->
+	      <modules></modules> <!--space delimited list of module names -->
+        <otherHardwareRequestString></otherHardwareRequestString> <!--e.g request specific GPU-->
+	      <memoryToAlloc>84</memoryToAlloc> <!--mem-per-cpu in GB-->
+        <specificNode></specificNode>
+        <anacondaEnvironmentMaster>emade</anacondaEnvironmentMaster>
+        <anacondaEnvironmentWorker>emade</anacondaEnvironmentWorker>
+        <numberOfGPUs>1</numberOfGPUs>
+    </slurmEngineParameters>
+    <gridEngineParameters>
+        <numHosts>15</numHosts>
+        <workersPerHost>3</workersPerHost>
+        <project>EOSL</project>
+        <queue>all.q</queue>
+        <parallelEnv>emade</parallelEnv>
+    </gridEngineParameters>
+    <evolutionParameters>
+        <initialPopulationSize>64</initialPopulationSize>
+        <elitePoolSize>51</elitePoolSize>
+        <launchSize>32</launchSize>
+	      <minQueueSize>20</minQueueSize>
+        <outlierPenalty>0.2</outlierPenalty>
+
+        <matings>
+            <mating>
+                <name>crossover</name>
+                <probability>0.20</probability>
+            </mating>
+            <mating>
+                <name>crossoverEphemeral</name>
+                <probability>0.20</probability>
+            </mating>
+            <mating>
+                <name>headlessChicken</name>
+                <probability>0.10</probability>
+            </mating>
+            <mating>
+                <name>headlessChickenEphemeral</name>
+                <probability>0.20</probability>
+            </mating>
+            <mating>
+                <name>cxTwoPoint</name>
+                <probability>0.00</probability>
+            </mating>
+            <mating>
+                <name>cxUniform</name>
+                <probability>0.30</probability>
+            </mating>
+            <mating>
+                <name>partiallyMatched</name>
+                <probability>0.00</probability>
+            </mating>
+            <mating>
+                <name>orderedCx</name>
+                <probability>0.00</probability>
+            </mating>
+        </matings>
+
+        <mutations>
+            <mutation>
+                <name>insert</name>
+                <probability>0.05</probability>
+            </mutation>
+            <mutation>
+                <name>insert modify</name>
+                <probability>0.10</probability>
+            </mutation>
+            <mutation>
+                <name>ephemeral</name>
+                <probability>0.25</probability>
+            </mutation>
+            <mutation>
+                <name>node replace</name>
+                <probability>0.05</probability>
+            </mutation>
+            <mutation>
+                <name>uniform</name>
+                <probability>0.05</probability>
+            </mutation>
+            <mutation>
+                <name>shrink</name>
+                <probability>0.05</probability>
+            </mutation>
+        </mutations>
+
+        <selections>
+            <selection>
+                <name>sel_nsga2</name>
+            </selection>
+        </selections>
+    </evolutionParameters>
+	<seedFile>
+		<!-- <filename>saved_runs/terminated_may_1/lastParents.txt</filename> -->
+		<!-- <filename>testCode/pickledTrees.dat</filename> -->
+	</seedFile>
+
+    <genePoolFitness>
+        <prefix>genePoolFitnessScoliosis</prefix> <!-- changed to Scoliosis -->
+    </genePoolFitness>
+    <paretoFitness>
+        <prefix>paretoFitnessScoliosis</prefix> <!-- changed to Scoliosis -->
+    </paretoFitness>
+    <parentsOutput>
+        <prefix>parentsScoliosis</prefix> <!-- changed to Scoliosis -->
+    </parentsOutput>
+    <paretoOutput>
+        <prefix>paretoFrontScoliosis</prefix>
+    </paretoOutput>
+</input>
